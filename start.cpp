@@ -36,8 +36,6 @@ string csectName;
 // remembering order for the ESTAB
 vector<string> estabOrder;
 
-
-
 vector<string> split(const string str, char delim) {
     vector<string> result;
     istringstream ss(str);
@@ -49,6 +47,33 @@ vector<string> split(const string str, char delim) {
         }
     }
     return result;
+}
+
+void parseESTAB(){
+    map<string,ESTAB_format>::iterator it;
+    for(it = ESTmap.begin(); it != ESTmap.end(); it++){
+        string reference = it->first;
+        // print out the reference
+        cout << reference << endl;
+
+        string controlSection = ESTmap[reference].csect;
+        string instruction = ESTmap[reference].instruction;
+        unsigned int address = ESTmap[reference].address;
+        unsigned int length = ESTmap[reference].length;
+
+        if(instruction == "")
+            continue;
+        else {
+            unsigned int lowerBound = ESTmap[controlSection].address;
+            unsigned int upperBound = ESTmap[controlSection].length+lowerBound;
+
+            if(address < lowerBound || address > upperBound){
+                string exceptionMessage = "ERROR: You are "
+                    "accessing illegal memory.";
+                throw(exceptionMessage);
+            }
+        }
+    }
 }
 
 void generateESTAB(vector<string> vec, string instruction){
@@ -144,7 +169,7 @@ int readforESTAB(const char* input){
         }
     }
     try{
-        // parseESTAB();
+        parseESTAB();
     } catch(string error){
         cout << error << endl;
         exit(0);
