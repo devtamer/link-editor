@@ -18,25 +18,26 @@ using namespace std;
 
 vector<vector<string> > lines;
 
-// struct to hold table for ESTAB
+// updates the memory when reading listing files
+unsigned int memLoc = 0;
+string csectName;
+
+// struct to hold format for ESTAB (control section name, instruction address
+// and address of symbol)
 struct ESTAB_format{
     string csect;
     string instruction;
     unsigned int address;
     unsigned int length;    
 };
-
 // This map holds the Symbol name as the key and address as the value
 map<string,ESTAB_format> ESTmap;
-
-// updates the memory when reading listing files
-unsigned int memLoc = 0;
-string csectName;
 
 // remembering order for the ESTAB
 vector<string> estabOrder;
 
-vector<string> split(const string str, char delim) {
+// for splitting the source coude into respective parts
+vector<string> partition(const string str, char delim) {
     vector<string> result;
     istringstream ss(str);
     string token;
@@ -48,42 +49,90 @@ vector<string> split(const string str, char delim) {
     }
     return result;
 }
+// This function creates the listing file and writes the data to it
+void write2ESTAB(){
+    ofstream outputfile;
 
-void parseESTAB(){
-    map<string,ESTAB_format>::iterator it;
-    for(it = ESTmap.begin(); it != ESTmap.end(); it++){
-        string reference = it->first;
-        // print out the reference
-        cout << reference << endl;
+    // --- FOR TESTING ---
+    // printf("ESTAB:\n");
+    // printf("-------------------------\n");
+    // for(int i = 0; i < estabOrder.size(); i++){
+    //     outputfile << estabOrder[i] << ' ';
+    //     outputfile << ESTmap[estabOrder[i]].csect << ' ';
+    //     outputfile << ESTmap[estabOrder[i]].instruction << ' ';
+    //     outputfile << ESTmap[estabOrder[i]].address << ' ';
+    //     outputfile << ESTmap[estabOrder[i]].length << '\n';
+    //     printf("%s %s %d %d\n", estabOrder[i].c_str(), ESTmap[estabOrder[i]].csect.c_str(), ESTmap[estabOrder[i]].address, ESTmap[estabOrder[i]].length);
+    // }
+    outputfile.open("ESTAB.st");
+    for(int i = 0; i < estabOrder.size(); i++){
+        string str = estabOrder[i];
+        if(str == "")
+            continue;
+        else if (ESTmap[str].instruction == ""){
+            unsigned int len = ESTmap[str].length;
+            unsigned int addy = ESTmap[str].address;
 
-        string controlSection = ESTmap[reference].csect;
+            stringstream streamA;
+            streamA << hex << addy;
+            string address(streamA.str());
+
+            stringstream streamB;
+            streamB << hex << len;
+            string length( streamB.str() );
+
+
+            outputfile << str
+                 << "       "
+                 << setw(6)
+                 << setfill('0')
+                 << address
+                 << " "
+                 << setw(6)
+                 << length
+                 << endl;
+        }
+        else if(ESTmap[str].instruction != ""){
+            stringstream stream;
+            stream << hex << ESTmap[str].address;
+            cout << ESTmap[str].address;
+            string address( stream.str());
+
+            outputfile << " "
+                 << setw(10)
+                 << setfill(' ')
+                 << str
+                 << " "
+                 << setw(6)
+                 << setfill('0')
+                 << address
+                 << endl;
+        }
+    }
+    return;
+}
+void readESTAB(){
+    map<string,ESTAB_format>::iterator iter;
+    for(iter = ESTmap.begin(); iter != ESTmap.end(); iter++){
+        string reference = iter->first;
+        string csect = ESTmap[reference].csect;
         string instruction = ESTmap[reference].instruction;
         unsigned int address = ESTmap[reference].address;
         unsigned int length = ESTmap[reference].length;
-
-        if(instruction == "")
-            continue;
-        else {
-            unsigned int lowerBound = ESTmap[controlSection].address;
-            unsigned int upperBound = ESTmap[controlSection].length+lowerBound;
-
-            if(address < lowerBound || address > upperBound){
-                string exceptionMessage = "ERROR: You are "
-                    "accessing illegal memory.";
-                throw(exceptionMessage);
-            }
-        }
     }
 }
 
-void generateESTAB(vector<string> vec, string instruction){
-    
+void buildESTAB(vector<string> vec, string instruction){
+
+    for (int i = 0; i < vec.size(); i++)
+    {
+        cout << vec[i] << endl; 
+    }
+
     ESTAB_format data;
     
-    if(vec.size() == 0 || vec[0] == ".")
-        return;
-    else if(vec.size() < 3)     //When encounting the end record
-        return;
+    if(vec.size() == 0 || vec[0] == "."){}
+    else if(vec.size() < 3){ }
     else if(vec[2] == "START"){
         unsigned int address;
         unsigned int length;
@@ -100,7 +149,7 @@ void generateESTAB(vector<string> vec, string instruction){
     }
     else if(vec[1] == "EXTDEF"){
 
-        vector<string> temp = split(vec[2], ',');
+        vector<string> temp = partition(vec[2], ',');
         for(vector<string>::size_type i = 0; i != temp.size(); i++){
             unsigned int address;
             istringstream stringConv(vec[0].c_str());
@@ -110,10 +159,8 @@ void generateESTAB(vector<string> vec, string instruction){
             data.csect = csectName;
             data.instruction = temp[i];
             ESTmap[temp[i]] = data;
+       
 
-            /*
-             * Insert in vector if not already present
-             */
             if(find(estabOrder.begin(), estabOrder.end(), 
                     temp[i]) != estabOrder.end()){
                 return;            
@@ -157,42 +204,41 @@ void generateESTAB(vector<string> vec, string instruction){
     return;
 }
 
-int readforESTAB(const char* input){
+int readinESTAB(const char* input){
     ifstream file(input);
     string line;
     vector<string> temp;
     if (file.is_open()) {
         while (getline(file, line)) {
-            temp = split(line, ' ');
+            temp = partition(line, ' ');
             lines.push_back(temp);
-            generateESTAB(temp,line);
+            buildESTAB(temp,line);
         }
     }
     try{
-        parseESTAB();
+        readESTAB();
     } catch(string error){
         cout << error << endl;
         exit(0);
     }
-    
-
-    // printESTAB();
+    write2ESTAB();
     file.close();
     return 0;
 }
 
 int main(int argc, char *argv[]) {
+    printf("You submitted %d listing file(s).\n", argc-1);
      if(argc < 2){
-        cout << "Error: Please specify a listing file to parse" << endl;
+        cout << "You did not include a .lis file" << endl;
         return 0;
     } else if(argc > 4){
-        cout << "Error: Please provide 1-4 listing files to parse" << endl;
+        cout << "Provide only 1-4 .lis files to convert" << endl;
         return 0;
     }
 
     // read files into estab and object code generators
      for(int i = 1; i < argc; i++){
-        readforESTAB(argv[i]);
+        readinESTAB(argv[i]);
         // readFileObjectFile(argv[i]);
     }
 }
