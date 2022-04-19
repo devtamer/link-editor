@@ -10,6 +10,8 @@ CS 530 / Professor Lenoard / Project 2
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
+#include <algorithm>
+#include <iomanip>
 #include <map>
 #include <stdlib.h>
 
@@ -79,17 +81,6 @@ vector<string> splitString(const string str){
 
 void write2ESTAB(){
     ofstream outputESTAB;
-    // print ESTAB to command line
-    // printf("ESTAB:\n");
-    // printf("-------------------------\n");
-    // for(int i = 0; i < insertionOrder.size(); i++){
-    //     outputESTAB << insertionOrder[i] << ' ';
-    //     outputESTAB << ESTmap[insertionOrder[i]].controlSec << ' ';
-    //     outputESTAB << ESTmap[insertionOrder[i]].instruction << ' ';
-    //     outputESTAB << ESTmap[insertionOrder[i]].address << ' ';
-    //     outputESTAB << ESTmap[insertionOrder[i]].length << '\n';
-    //     printf("%s %s %d %d\n", insertionOrder[i].c_str(), ESTmap[insertionOrder[i]].controlSec.c_str(), ESTmap[insertionOrder[i]].address, ESTmap[insertionOrder[i]].length);
-    // }
     outputESTAB.open("ESTAB.st");
     for(int i = 0; i < insertionOrder.size(); i++){
         string str = insertionOrder[i];
@@ -110,13 +101,14 @@ void write2ESTAB(){
 
             outputESTAB << str
                  << "       "
-                 << setw(6)
+                 << setw(0)
                  << setfill('0')
                  << address
                  << " "
                  << setw(6)
                  << length
                  << endl;
+                    
         }
         else if(ESTmap[str].instruction != ""){
             stringstream stream;
@@ -180,15 +172,17 @@ void buildESTAB(vector<string> vec, string instruction){
     else if(vec[1] == "EXTDEF"){
 
         vector<string> temp = getToken(vec[2], ',');
-        for(vector<string>::size_type i = 0; i != temp.size(); i++){
+        for(vector<string>::size_type i = 0; i <= temp.size()-1; i++){
             unsigned int address;
             istringstream converter(vec[0].c_str());
             converter >> hex >> address;
-
+            
             data.address = address;
             data.controlSec = csect;
             data.instruction = temp[i];
             ESTmap[temp[i]] = data;
+
+
 
             if(find(insertionOrder.begin(), insertionOrder.end(), 
                     temp[i]) != insertionOrder.end()){
@@ -196,6 +190,7 @@ void buildESTAB(vector<string> vec, string instruction){
             } else {
                 insertionOrder.push_back(temp[i]);
             }
+
         }
         
 
@@ -206,6 +201,7 @@ void buildESTAB(vector<string> vec, string instruction){
             unsigned int address;
             istringstream converter(vec[0].c_str());
             converter >> hex >> address;
+            // cout << address << endl;
 
             data.controlSec = csect;
             data.address = address + LOC;
@@ -225,6 +221,7 @@ void buildESTAB(vector<string> vec, string instruction){
         converter >> hex >> length;
         
         ESTmap[csect].length = length+3;
+        // cout << "ESTAB Length " << hex << ESTmap[csect].length << endl;
         if(LOC == 0)
             LOC = length+3;
         else
@@ -233,7 +230,7 @@ void buildESTAB(vector<string> vec, string instruction){
     return;
 }
 // handling first line of object record to find project name
-void haedRec(vector<vector<string> > indin, string file){
+void headRec(vector<vector<string> > indin, string file){
     string temp = file.substr(0, file.find(".",0));
     temp += ".obj";
 
@@ -260,13 +257,17 @@ void haedRec(vector<vector<string> > indin, string file){
             string len(sizS.str());
 
             outputFile << "H"
-                 << reference
-                 << setfill('0')
-                 << setw(6)
-                 << addy
-                 << setw(6)
-                 << len
-                 << endl;
+                       << reference;
+            for(int j = 6; j > reference.length(); j--){
+                outputFile << " ";
+            }
+            outputFile 
+            << setfill('0')
+            << setw(6)
+            << addy
+            << setw(6)
+            << len
+            << endl;
         }
     }
     outputFile.close();
@@ -295,8 +296,12 @@ void defRecord(vector<vector<string> > indin, string file){
                 stream << hex << address;
                 string addy(stream.str());
 
-                outputFile << symbols[i]
-                           << setw(6)
+                outputFile << symbols[i];
+                for (int j = 6; j > symbols[i].length(); j--)
+                {
+                    outputFile << " ";
+                }
+                           outputFile << setw(6)
                            << setfill('0')
                            << addy;
             }
@@ -322,12 +327,23 @@ void refRecord(vector<vector<string> > indin, string file){
         else if(indin[i][1] == "EXTREF")
         {
             outputFile << "R";
+            
             vector<string> symbols = getToken(indin[i][2], ',');
-            for(int i = 0; i < symbols.size(); i++){
-                outputFile << symbols[i];
+            for(int j = 0; j < symbols.size(); j++){
+                if(symbols[j].size() == 6){
+                    outputFile << symbols[j] << " ";
+                }
+                else{
+                    outputFile << symbols[j] << " ";
+                }
+               
+        
+
             }
             outputFile << endl;
+           
         }
+        
     }
     
     outputFile.close();
@@ -410,13 +426,10 @@ void textRecord(vector<vector<string> > indin, string file){
         outputFile << "T" 
              << setw(6) 
              << setfill('0') 
-             << MEM
-             << "^"
-
+             << MEM 
              << setw(2) 
              << setfill('0') 
-             << SZ
-             << "^";
+             << SZ;
 
         for(int j = 0; j < codes.size(); j++){
             outputFile << codes[j];
@@ -434,15 +447,13 @@ void textRecord(vector<vector<string> > indin, string file){
     stringstream streamC;
     streamC << hex << programLength;
     string csectLength(streamC.str());
-
-    outputFile << "T"
-         << setw(6) << setfill('0') 
-         << csectLength
-         << "03"
-         << setw(6) << setfill('0') 
-         << indin[programSize][3] 
-         << "^"
-         << endl;
+        outputFile << "T"
+                   << setw(6) << setfill('0')
+                   << csectLength
+                   << "03"
+                   << setw(6) << setfill('0')
+                   << indin[programSize][3]
+                   << endl;
 
     outputFile.close();
     return;
@@ -472,7 +483,6 @@ void modrx(vector<string> symbols, vector<vector<string> > indin,string file, in
                 unsigned int address;
                 istringstream converter(indin[i][0].c_str());
                 converter >> hex >> address;
-                cout << address << endl; 
                 address+=1;
 
                 stringstream stream;
@@ -567,42 +577,76 @@ void modRec(vector<vector<string> > indin, string file){
     return;
 }
 // creating end record depending on final instruction
-void endRecord(vector<vector<string> > indin, string file){
+// void endRecord(vector<vector<string> > indin, string file){
+//     string temp = file.substr(0, file.find(".",0));
+//     temp += ".obj";
+//     cout << indin[indin.size()-1][0] << endl;
+//     ofstream outputFile;
+//     outputFile.open(temp.c_str(), ios::app);
+
+//     bool secondPass = false;
+//     string symbol;
+//     for(int i = 0; i < indin.size(); i++){
+//         if(indin[i][0] == ".")
+//             continue;
+//         if(indin[i][0] != "END")
+//             continue;
+//         else if(indin[i].size() == 1)
+//             outputFile << "E" << endl;
+//         else {
+//             symbol = indin[i][1];
+//             secondPass = true;
+//         }
+//     }
+//     if(secondPass){
+//         string address = "";
+//         for(int j = 1; j < indin.size(); j++){
+//             if(indin[j][1] == symbol)
+//                 address = indin[j][0];
+//             if(address != ""){
+                
+//                 outputFile << "E"
+//                            << address
+//                            << endl;
+//                 break;
+//             }
+//         }
+//     }
+//     outputFile.close();
+//     return;
+// }
+void endRecord(vector<vector<string> > indin, string file) {
     string temp = file.substr(0, file.find(".",0));
     temp += ".obj";
 
     ofstream outputFile;
     outputFile.open(temp.c_str(), ios::app);
 
-    bool secondPass = false;
-    string symbol;
-    for(int i = 0; i < indin.size(); i++){
-        if(indin[i][0] == ".")
-            continue;
-        if(indin[i][0] != "END")
-            continue;
-        else if(indin[i].size() == 1)
-            outputFile << "E" << endl;
-        else {
-            symbol = indin[i][1];
-            secondPass = true;
+    string endRecord, endAddress;
+    for (int i = 0; i < indin.size(); i++) {
+        for (int j = 0; j < indin[i].size(); j++) {
+            if (indin[i][j] == "END") {
+                temp = indin[i][j + 1];
+            }
         }
     }
-    if(secondPass){
-        string address = "";
-        for(int j = 1; j < indin.size(); j++){
-            if(indin[j][1] == symbol)
-                address = indin[j][0];
-            if(address != ""){
-                outputFile << "E"
-                           << address
-                           << endl;
-                break;
+
+    if (temp.empty()) {
+        outputFile << "E" << endl;
+    } else {
+        for (int i = 0; i < indin.size(); i++) {
+            if (indin[i][1] == temp) {
+                endAddress = indin[i][0];
+                stringstream ss;
+                ss << "E" << setw(6) << setfill('0') << endAddress;
+                endRecord = ss.str();
+                outputFile << endRecord;
             }
         }
     }
     outputFile.close();
     return;
+
 }
 
 // read in source code for listing file and call functions for 
@@ -650,7 +694,7 @@ void handleObj(const char* input){
     file.close();
 
     // call functions for creating object file
-    haedRec(indin, input);
+    headRec(indin, input);
     defRecord(indin, input);
     refRecord(indin, input);
     textRecord(indin, input);
