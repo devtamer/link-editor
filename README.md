@@ -1,8 +1,8 @@
 ## This Program was written by:
 
-Tamer Elsawaf
-Drew Meade
-CS 530 Systems Programming / Professor Lenoard / Project 2: link-editor
+- Tamer Elsawaf
+- Drew Meade
+- CS 530 Systems Programming / Professor Lenoard / Project 2: link-editor
 
 ## # XE LINK-EDITOR
 
@@ -22,13 +22,19 @@ g++ -o asl asl.cpp
 The user will start the program (the program shall be named "asl") and will
 provide the listing file(s) as arguments on the command-line each separated by
 spaces, i.e.:
-"[cssc0000@edoras ~]$ asl first.lis second.lis third.list"
+
+- asl first.lis second.lis third.list"
+- Example of listing file (input)
+  ![alt text](/testingFiles/listingfile_ex.png)
 
 ## Output
 
 The SIC (XE variant) object file(s) such as those found in figure 3.9 of the text.
 Also, print the ESTAB in separate file (name.st) similar to
 the ESTAB at the top of page 143 in the text.
+
+- Object File Example ![alt text](/testingFiles/objectfile_ex.png)
+- (SIC/XE) ESTAB Example![alt text](/testingFiles/ESTAB_ex.png)
 
 ## Design Choices
 
