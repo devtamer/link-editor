@@ -33,9 +33,10 @@ The SIC (XE variant) object file(s) such as those found in figure 3.9 of the tex
 Also, print the ESTAB in separate file (name.st) similar to
 the ESTAB at the top of page 143 in the text.
 
-- Object File Example
+- Object File Example <br>
   ![alt text](/testingFiles/objectfile_ex.png)
-- (SIC/XE) ESTAB Example
+  <br>
+- (SIC/XE) ESTAB Example <br>
   ![alt text](/testingFiles/ESTAB_ex.png)
 
 ## Design Choices
