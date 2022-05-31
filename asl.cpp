@@ -1,7 +1,6 @@
 /**
 This Program was written by:
-Tamer Elsawaf, cssc0445, RedID: 821268507
-Drew Meade, cssc0403, RedID: 822332778
+Tamer Elsawaf, cssc0445
 CS 530 / Professor Lenoard / Project 2
  **/
 #include <iostream>

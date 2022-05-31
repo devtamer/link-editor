@@ -1,7 +1,6 @@
 ## This Program was written by:
 
 - Tamer Elsawaf
-- Drew Meade
 - CS 530 Systems Programming / Professor Lenoard / Link-Editor
 
 ## # XE LINK-EDITOR
